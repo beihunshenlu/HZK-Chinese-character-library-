@@ -1,0 +1,1006 @@
+#include"bios.h"
+#include"dos.h"
+#include"graphics.h"
+#include"stdio.h"
+#include"stdlib.h"
+#include"string.h"
+#include"math.h"
+#define S2 16
+#define S1 48
+#define HZK2 "c:\\HZK16"
+#define HZK1 "c:\\HZK48S"
+struct student
+{
+    char surname[20];
+    float score[3];
+    float totalscore;
+};
+void mouse(int,int);
+void disphz1(int,int,char *,int,int);
+void disphz2(int,int,char *,int,int);
+void sound(unsigned int);
+void mouse(int x,int y)
+{
+    setwritemode(XOR_PUT);
+    line(x,y+5,x+10,y+5);
+    line(x+5,y,x+5,y+10);
+}
+void sound(unsigned int freq)
+{
+    union
+    {
+        int divisor;
+        char c[2];
+    } count;
+    char bits;
+    count.divisor=1193180/freq;
+    outportb(0x43,0xb6);
+    outportb(0x42,count.c[0]);
+    outportb(0x42,count.c[1]);
+    bits=inportb(0x61);
+    outportb(0x61,bits|3);
+    delay(5000);
+    outportb(0x61,bits&0xfc);
+    outportb(0x61,bits);
+}
+void disphz1(int x,int y,char *p,int color,int m)
+{
+    int i,j,n,k;
+    FILE *fp;
+    char qh,wh;
+    long offset;
+    char buffer[S1*S1/8];
+    char mask[]= {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
+    if((fp=fopen(HZK1,"rb"))==NULL)
+        exit(1);
+    while(*p!=0)
+    {
+        qh=*p-160-15;
+        p++;
+        wh=*p-160;
+        p++;
+        offset=(94L*(qh-1)+wh-1)*S1*S1/8;
+        fseek(fp,offset,0);
+        fread(buffer,S1*S1/8,1,fp);
+        for(i=0; i<S1; i++)
+            for(j=0; j<S1; j++)
+            {
+                if((buffer[S1/8*i+j/8]&mask[j%8])!=0)
+                    for(n=0; n<m; n++)
+                        for(k=0; k<m; k++)
+                            putpixel(x+j*m+n,y+i*m+k,color);
+            }
+        x+=S1*m+70;
+    }
+    fclose(fp);
+}
+void disphz2(int x,int y,char *p,int color,int m)
+{
+    int i,j,n,k;
+    FILE *fp;
+    char qh,wh;
+    long offset;
+    char buffer[S2*S2/8];
+    char mask[]= {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
+    if((fp=fopen(HZK2,"rb"))==NULL)
+        exit(1);
+    while(*p!=0)
+    {
+        qh=*p-160;
+        p++;
+        wh=*p-160;
+        p++;
+        offset=(94L*(qh-1)+wh-1)*S2*S2/8;
+        fseek(fp,offset,0);
+        fread(buffer,S2*S2/8,1,fp);
+        for(i=0; i<S2; i++)
+            for(j=0; j<S2; j++)
+            {
+                if((buffer[S2/8*i+j/8]&mask[j%8])!=0)
+                    for(n=0; n<m; n++)
+                        for(k=0; k<m; k++)
+                            putpixel(x+j*m+n,y+i*m+k,color);
+            }
+        x+=S2*m+5;
+    }
+    fclose(fp);
+}
+void disphz3(int x,int y,char *p,int color,int m)
+{
+    int i,j,n,k;
+    FILE *fp;
+    char qh,wh;
+    long offset;
+    char buffer[S2*S2/8];
+    char mask[]= {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
+    if((fp=fopen(HZK2,"rb"))==NULL)
+        exit(1);
+    while(*p!=0)
+    {
+        qh=*p-160;
+        p++;
+        wh=*p-160;
+        p++;
+        offset=(94L*(qh-1)+wh-1)*S2*S2/8;
+        fseek(fp,offset,0);
+        fread(buffer,S2*S2/8,1,fp);
+        for(i=0; i<S2; i++)
+        {
+            for(j=0; j<S2; j++)
+            {
+                if((buffer[S2/8*i+j/8]&mask[j%8])!=0)
+                    for(n=0; n<m; n++)
+                        for(k=0; k<m; k++)
+                            putpixel(x+j*m+n,y+i*m+k,color);
+            }
+ 
+            delay(7000);
+        }
+        x+=S2*m+5;
+        sound(600);
+    }
+    fclose(fp);
+}
+int main()
+{
+    int a;
+    int i,j,n,records,add[10]= {0},width[10]= {0},digital[10]= {0},k=0,t=0,sign=0,mark=0,s=0;
+    short head,chead,recordlength;
+    char empty[32],name[11],rescore[10]= {0};
+    struct student person[100]= {0},swap;
+    int additional=0;
+    int k1=0,k2=0;
+    char debug[32]= {0},judge=0;
+    char *q1="综合应用",*q2="程序功能：",*q3="显示学生成绩直方图",*q4="显示各分数段圆饼图";
+    char *q5="按任意键继续";
+    char *r1="请输入文件名，回车键结束",*r2="提示：";
+    char *r3="可以带盘符和路径，如：";
+    char *r4="可以省略";
+    char *z1="历时两个月，大程序完成";
+    char *z2="朱志浩";
+    char *z3="丙申甲午癸亥壬子";
+    int v=0,cursor=50,c=0;
+    char z[2],m[100]= {0};
+    char key;
+    union
+    {
+        int key;
+        char c[2];
+    } u;
+    float average[100];
+    float pass[5]= {0};
+    float angle[5]= {0};
+    char *subsection[11]= {"0","10","20","30","40","50","60","70","80","90","100"};
+    int postion=400;
+    int p1=0,x1=0;
+    int x0,y0,x,y,button,button0,p2=0,n2=0,x2=0,p3=0,n3=0,x3=0,n4=0,x5=0,x4=0,x6=0,x7=0;
+    int n31=0,n41=0,p4=0,p5=0,p6=0,n6=0,n5=0,special1=0,special2=0;
+    int x8=0,x9=0,x10=0,x11=0;
+    FILE *fp;
+    int gdriver=DETECT, gmode;
+    initgraph(&gdriver,&gmode,"");
+    setbkcolor(2);
+    circle(231,133,45);
+    circle(347,133,45);
+    circle(465,133,45);
+    circle(582,133,45);
+    circle(100,133,45);
+    setfillstyle(1,3);
+    floodfill(231,133,15);
+    floodfill(343,133,15);
+    floodfill(458,133,15);
+    floodfill(568,133,15);
+    floodfill(100,133,15);
+    rectangle(200,300,440,450);
+    setfillstyle(1,6);
+    floodfill(201,301,15);
+    disphz1(205,107,q1,15,1);
+    disphz2(210,310,q2,14,1);
+    disphz2(230,330,q3,14,1);
+    disphz2(230,350,q4,14,1);
+    disphz2(260,420,q5,14,1);
+    outtextxy(210,335,"1.");
+    outtextxy(210,355,"2.");
+    settextstyle(0,0,6);
+    outtextxy(80,114,"C");
+    getch();
+    cleardevice();
+    setbkcolor(0);
+    settextstyle(0,0,1);
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+    disphz2(50,100,r1,15,1);
+    rectangle(50,120,400,140);
+    setfillstyle(1,15);
+    floodfill(100,121,15);
+    disphz2(50,145,r2,14,1);
+    disphz2(90,165,r3,14,1);
+    disphz2(120,185,r4,14,1);
+    outtextxy(90,190,".dbf");
+    outtextxy(75,170,"1,");
+    outtextxy(75,190,"2,");
+    outtextxy(320,170,"c:\\ss.dbf");
+    while(1)
+    {
+ 
+        do
+        {
+            setcolor(0);
+            line(cursor,140,cursor+10,140);
+            delay(3000);
+            setcolor(15);
+            line(cursor,140,cursor+10,140);
+            delay(3000);
+        }
+        while(!kbhit());
+        u.key=bioskey(0);
+        setcolor(3);
+        if((u.c[0]<='z'&&u.c[0]>='a')||(u.c[0]>='A'&&u.c[0]<='Z')||(u.c[0]>='0'&&u.c[0]<='9')||u.c[0]=='.'||u.c[0]=='\\'||u.c[0]==':'||u.c[0]=='_')
+        {
+            z[0]=u.c[0];
+            z[1]=0;
+            outtextxy(cursor,122,z);
+            strcat(&m[c],z);
+            c++;
+            cursor+=8;
+        }
+        if(u.c[1]==28)
+            break;
+ 
+        if(u.c[1]==14&&c>0)
+        {
+            c--;
+            z[0]=m[c];
+            z[1]=0;
+            setcolor(15);
+            cursor-=8;
+            outtextxy(cursor,122,z);
+            setcolor(0);
+            m[c]=0;
+        }
+    }
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+    if((fp=fopen(m,"rb"))==NULL)
+    {
+        cleardevice();
+        disphz1(140,200,"打开失败",4,1);
+        disphz2(260,320,"按任意键退出",14,1);
+        getch();
+    }
+ 
+    fread(empty,4,1,fp);
+    fread(&records,4,1,fp);
+    fread(&head,2,1,fp);
+    chead=head;
+    head=(head-33)/32;
+    fread(&recordlength,2,1,fp);
+    fread(empty,20,1,fp);
+    for(i=0; i<head; i++)
+    {
+        fread(name,11,1,fp);
+        if(strcmp(name,"姓名")==0)
+        {
+            fgetc(fp);
+            fread(&add[0],4,1,fp);
+            fread(&width[0],1,1,fp);
+            fread(&digital[0],1,1,fp);
+            fread(empty,14,1,fp);
+        }
+        else if(strcmp(name,"数学")==0)
+        {
+            fgetc(fp);
+            fread(&additional,4,1,fp);
+            fread(&width[1],1,1,fp);
+            fread(&digital[1],1,1,fp);
+            fread(empty,14,1,fp);
+        }
+        else if(strcmp(name,"计算机")==0)
+        {
+            fgetc(fp);
+            fread(&add[2],4,1,fp);
+            fread(&width[2],1,1,fp);
+            fread(&digital[2],1,1,fp);
+            fread(empty,14,1,fp);
+        }
+        else if(strcmp(name,"英语")==0)
+        {
+            fgetc(fp);
+            fread(&add[3],4,1,fp);
+            fread(&width[3],1,1,fp);
+            fread(&digital[3],1,1,fp);
+            fread(empty,14,1,fp);
+        }
+        else
+            fread(empty,21,1,fp);
+    }
+    fclose(fp);
+    if((fp=fopen(m,"rb"))==NULL)
+        exit(1);
+    for(i=0; i<chead; i++)
+        fgetc(fp);
+    for(i=0; i<records; i++)
+    {
+        if(k1!=0)
+        {
+            k1=0;
+            fseek(fp,(long)(recordlength-1),1);
+        }
+        fread(&judge,1,1,fp);
+        if(judge==42)
+        {
+            judge=0;
+            k1++;
+            k2++;
+            continue;
+        }
+        fseek(fp,-1,1);
+        rewind(fp);
+        for(j=0; j<chead; j++)
+            fgetc(fp);
+ 
+        fseek(fp,(long)(i*recordlength+add[0]),1);
+        fread(person[i].surname,width[0],1,fp);
+        for(j=strlen(person[i].surname)-1; j>=0; j--)
+        {
+            if(person[i].surname[j]==' ')
+                person[i].surname[j]=0;
+            else
+                break;
+        }
+ 
+ 
+ 
+        rewind(fp);
+        for(j=0; j<chead; j++)
+            fgetc(fp);
+ 
+ 
+        fseek(fp,(long)(i*recordlength)+additional,1);
+ 
+        fread(rescore,width[1],1,fp);
+ 
+ 
+ 
+        for(j=0; j<9; j++)
+        {
+            if(rescore[j]=='.')
+                sign=j;
+            if(rescore[j]==' ')
+                t++;
+        }
+        mark=sign-t;
+ 
+ 
+ 
+ 
+ 
+ 
+        if(mark==3)
+            person[i].score[0]=(rescore[t]-48)*100+(rescore[t+1]-48)*10+(rescore[t+2]-48);
+        if(mark==2)
+            person[i].score[0]=(rescore[t]-48)*10+(rescore[t+1]-48);
+        if(mark==1)
+            person[i].score[0]=(rescore[t]-48);
+ 
+ 
+        for(j=sign+1; j<=width[1]-sign+1; j++)
+        {
+            a=rescore[j]-48;
+            s=s*10+a;
+        }
+        person[i].score[0]+=s/pow(10,digital[1]);
+ 
+ 
+        for(j=0; j<9; j++)
+            rescore[j]=0;
+        t=0;
+        sign=0;
+        mark=0;
+        s=0;
+ 
+ 
+        rewind(fp);
+        for(j=0; j<chead; j++)
+            fgetc(fp);
+ 
+        fseek(fp,(long)(i*recordlength)+add[2],1);
+        fread(rescore,width[2],1,fp);
+        for(j=0; j<9; j++)
+        {
+            if(rescore[j]=='.')
+                sign=j;
+            if(rescore[j]==' ')
+                t++;
+        }
+        mark=sign-t;
+        if(mark==3)
+            person[i].score[1]=(rescore[t]-48)*100+(rescore[t+1]-48)*10+(rescore[t+2]-48);
+        if(mark==2)
+            person[i].score[1]=(rescore[t]-48)*10+(rescore[t+1]-48);
+        if(mark==1)
+            person[i].score[1]=(rescore[t]-48);
+        for(j=sign+1; j<=width[2]-sign+1; j++)
+        {
+            a=rescore[j]-48;
+            s=s*10+a;
+        }
+        person[i].score[1]+=s/pow(10,digital[2]);
+ 
+ 
+ 
+ 
+ 
+ 
+        for(j=0; j<9; j++)
+            rescore[j]=0;
+        t=0;
+        sign=0;
+        mark=0;
+        s=0;
+ 
+        rewind(fp);
+        for(j=0; j<chead; j++)
+            fgetc(fp);
+ 
+        fseek(fp,(long)(i*recordlength)+add[3],1);
+        fread(rescore,width[3],1,fp);
+        for(j=0; j<9; j++)
+        {
+            if(rescore[j]=='.')
+                sign=j;
+            if(rescore[j]==' ')
+                t++;
+        }
+        mark=sign-t;
+        if(mark==3)
+            person[i].score[2]=(rescore[t]-48)*100+(rescore[t+1]-48)*10+(rescore[t+2]-48);
+        if(mark==2)
+            person[i].score[2]=(rescore[t]-48)*10+(rescore[t+1]-48);
+        if(mark==1)
+            person[i].score[2]=(rescore[t]-48);
+        for(j=sign+1; j<=width[3]-sign+1; j++)
+        {
+            a=rescore[j]-48;
+            s=s*10+a;
+        }
+        person[i].score[1]+=s/pow(10,digital[3]);
+        for(j=0; j<9; j++)
+            rescore[j]=0;
+        t=0;
+        sign=0;
+        mark=0;
+        s=0;
+        person[i].totalscore=person[i].score[0]+person[i].score[1]+person[i].score[2];
+ 
+        fread(empty,recordlength-add[3]-width[3],1,fp);
+    }
+    fclose(fp);
+    for(i=0; i<=records-2; i++)
+    {
+        k=i;
+        for(j=i+1; j<=records-1; j++)
+        {
+            if(person[j].totalscore==person[i].totalscore)
+                if(person[i].score[0]>person[j].score[0])
+                    k=j;
+            if(person[j].totalscore>person[k].totalscore)
+                k=j;
+        }
+        swap=person[k];
+        person[k]=person[i];
+        person[i]=swap;
+    }
+    cleardevice();
+    i=0;
+    while(1)
+    {
+        for(; i<records-k2; i++)
+        {
+            setcolor(15);
+            setfillstyle(5,9);
+            bar3d(100,400-3*person[i].score[0],150,400,20,1);
+            bar3d(300,400-3*person[i].score[1],350,400,20,1);
+            bar3d(500,400-3*person[i].score[2],550,400,20,1);
+            line(50,50,50,400);
+            line(50,400,600,400);
+            line(50,50,40,60);
+            line(50,50,60,60);
+            line(600,400,590,390);
+            line(600,400,590,410);
+            for(j=0; j<=10; j++)
+            {
+                outtextxy(30,postion,*(subsection+j));
+                postion-=30;
+            }
+            disphz2(103,410,"英语",15,1);
+            disphz2(300,410,"计算机",15,1);
+            disphz2(508,410,"数学",15,1);
+            disphz2(600,450,person[i].surname,15,1);
+            postion=400;
+            rectangle(100,430,150,450);
+            rectangle(300,430,350,450);
+            rectangle(505,430,555,450);
+            setfillstyle(1,3);
+            floodfill(330,440,15);
+            floodfill(530,440,15);
+            if(i==0)
+            {
+                setfillstyle(1,7);
+                floodfill(110,440,15);
+            }
+            else
+                floodfill(110,440,15);
+            disphz2(110,433,"前页",15,1);
+            disphz2(310,433,"后页",15,1);
+            disphz2(510,433,"退出",15,1);
+ 
+            mouse(x,y);
+ 
+            while(1)
+            {
+                while(!kbhit())
+                {
+                    _AX=3;
+                    geninterrupt(0X33);
+                    x=_CX;
+                    button=_BX;
+                    y=_DX;
+                    if(x0!=x||y0!=y)
+                    {
+                        setcolor(15);
+                        if(p2!=0)
+                        {
+                            p2=0;
+                            disphz2(110,433,"前页",15,1);
+                        }
+                        if(n2!=0)
+                        {
+                            n2=0;
+                            disphz2(310,433,"后页",15,1);
+                        }
+                        if(x2!=0)
+                        {
+                            x2=0;
+                            disphz2(510,433,"退出",15,1);
+                        }
+                        mouse(x0,y0);
+                        mouse(x,y);
+                        x0=x;
+                        y0=y;
+                        if(x>100&&x<150&&y>430&&y<450&&i!=0)
+                        {
+                            p2++;
+                            disphz2(110,433,"前页",4,1);
+                        }
+                        if(x>300&&x<350&&y>430&&y<450)
+                        {
+                            n2++;
+                            disphz2(310,433,"后页",4,1);
+                        }
+                        if(x>505&&x<555&&y>430&&y<450)
+                        {
+                            x2++;
+                            disphz2(510,433,"退出",4,1);
+                        }
+                    }
+                    if(button0!=button)
+                    {
+                        if((button&1==1)&&x>100&&x<150&&y>430&&y<450)
+                        {
+                            if(i!=0)
+                            {
+                                p3++;
+                                button0=button;
+                                break;
+                            }
+ 
+ 
+                        }
+                        if((button&1==1)&&x>300&&x<350&&y>430&&y<450)
+                        {
+ 
+                            if(i!=records-1)
+                            {
+                                n3++;
+                                button0=button;
+                                break;
+                            }
+                            else
+                            {
+                                n4++;
+                                button0=button;
+                                break;
+                            }
+ 
+                        }
+                        if((button&1==1)&&x>505&&x<555&&y>430&&y<450)
+                        {
+                            x8++;
+                button0=button;
+                break;
+                        }
+                        button0=button;
+                    }
+                }
+                 
+                if(p3!=0)
+                {
+                    p3=0;
+                    p4++;
+                    break;
+                }
+                if(n3!=0)
+                {
+                    n3=0;
+                    n31++;
+                    break;
+                }
+                if(n4!=0)
+                {
+                    n4=0;
+                    n41++;
+                    break;
+                }
+        if(x8!=0)
+        {
+            x8=0;
+            x9++;
+            break;
+        }
+                key=bioskey(0);
+                while(1)
+                {
+                    if((key=='P'||key=='p')&&i>0)
+                    {
+                        p5++;
+                        cleardevice();
+                        break;
+                    }
+                    if(key=='N'||key=='n')
+                    {
+                        n5++;
+                        cleardevice();
+                        break;
+                    }
+                    if(key=='X'||key=='x')
+                    {
+                        x10++;
+            cleardevice();
+                        break;
+                    }
+                    else
+                    {
+                        special1++;
+                        break;
+                    }
+ 
+                }
+                if(x10!=0)
+                {
+                    x10=0;
+            x11++;
+            break;
+                }
+                if(special1!=0)
+                {
+                    special1=0;
+                    special2++;
+                    break;
+                }
+                if(p5!=0)
+                {
+                    p5=0;
+                    p6++;
+                    break;
+                }
+                if(n5!=0)
+                {
+                    n5=0;
+                    n6++;
+                    cleardevice();
+                    break;
+                }
+            }
+            if(p4!=0)
+            {
+                p4=0;
+                i-=2;
+                cleardevice();
+                continue;
+            }
+            if(n31!=0)
+            {
+                n31=0;
+                cleardevice();
+                continue;
+            }
+            if(n41!=0)
+            {
+                n41=0;
+                cleardevice();
+                break;
+            }
+            if(p6!=0)
+            {
+                p6=0;
+                i-=2;
+                cleardevice();
+                continue;
+            }
+            if(special2!=0)
+            {
+                i-=1;
+                special2=0;
+                cleardevice();
+        continue;
+ 
+            }
+            if(n6!=0)
+            {
+                n6=0;
+                cleardevice();
+                continue;
+            }
+        if(x9!=0)
+            {
+        x9=0;
+        cleardevice();
+        break;
+        }
+        if(x11!=0)
+        {
+        x11=0;
+        cleardevice();
+        break;
+        }
+        }
+        for(i=0; i<records; i++)
+        {
+            average[i]=(person[i].score[0]+person[i].score[1]+person[i].score[2])/3;
+            if(average[i]<60)
+                pass[0]++;
+            if(average[i]>=60&&average[i]<70)
+                pass[1]++;
+            if(average[i]>=70&&average[i]<80)
+                pass[2]++;
+            if(average[i]>=80&&average[i]<90)
+                pass[3]++;
+            if(average[i]>=90)
+                pass[4]++;
+        }
+        for(i=0; i<5; i++)
+            angle[i]=pass[i]/(pass[0]+pass[1]+pass[2]+pass[3]+pass[4]);
+        setcolor(5);
+        setfillstyle(8,6);
+        pieslice(320,240,0,angle[0]*360,100);
+        rectangle(500,50,510,60);
+        floodfill(501,51,5);
+        outtextxy(515,55,"0-60");
+        setcolor(1);
+        setfillstyle(6,6);
+        pieslice(320,240,angle[0]*360,(angle[0]+angle[1])*360,100);
+        rectangle(500,70,510,80);
+        floodfill(501,71,1);
+        outtextxy(515,75,"60-70");
+        setcolor(2);
+        setfillstyle(2,7);
+        pieslice(320,240,(angle[0]+angle[1])*360,(angle[0]+angle[1]+angle[2])*360,100);
+        rectangle(500,90,510,100);
+        floodfill(501,91,2);
+        outtextxy(515,95,"70-80");
+        setcolor(3);
+        setfillstyle(3,8);
+        pieslice(320,240,(angle[0]+angle[1]+angle[2])*360,(angle[0]+angle[1]+angle[2]+angle[3])*360,100);
+        rectangle(500,110,510,120);
+        floodfill(501,111,3);
+        outtextxy(515,115,"80-90");
+        setcolor(15);
+        setfillstyle(5,9);
+        pieslice(320,240,(angle[0]+angle[1]+angle[2]+angle[3])*360,(angle[0]+angle[1]+angle[2]+angle[3]+angle[4])*360,100);
+        rectangle(500,130,510,140);
+        floodfill(501,131,15);
+        outtextxy(515,135,"90-100");
+        rectangle(100,430,150,450);
+        rectangle(300,430,350,450);
+        rectangle(505,430,555,450);
+        setfillstyle(1,3);
+        floodfill(105,440,15);
+        floodfill(540,440,15);
+        setfillstyle(1,7);
+        floodfill(305,440,15);
+        disphz2(110,433,"前页",15,1);
+        disphz2(310,433,"后页",15,1);
+        disphz2(510,433,"退出",15,1);
+        mouse(x,y);
+        while(1)
+        {
+            while(!kbhit())
+            {
+ 
+                _AX=3;
+                geninterrupt(0X33);
+                x=_CX;
+                button=_BX;
+                y=_DX;
+                if(x0!=x||y0!=y)
+                {
+                    setcolor(15);
+                    if(p2!=0)
+                    {
+                        p2=0;
+                        disphz2(110,433,"前页",15,1);
+                    }
+                    if(n2!=0)
+                    {
+                        n2=0;
+                        disphz2(310,433,"后页",15,1);
+                    }
+                    if(x2!=0)
+                    {
+                        x2=0;
+                        disphz2(510,433,"退出",15,1);
+                    }
+                    mouse(x0,y0);
+                    mouse(x,y);
+                    x0=x;
+                    y0=y;
+                    if(x>100&&x<150&&y>430&&y<450)
+                    {
+                        p2++;
+                        disphz2(110,433,"前页",4,1);
+                    }
+                    if(x>300&&x<350&&y>430&&y<450)
+                    {
+                        n2++;
+                        disphz2(310,433,"后页",15,1);
+                    }
+                    if(x>505&&x<555&&y>430&&y<450)
+                    {
+                        x2++;
+                        disphz2(510,433,"退出",4,1);
+                    }
+                }
+                if(button0!=button)
+                {
+ 
+                    if((button&1==1)&&x>100&&x<150&&y>430&&y<450)
+                    {
+                        p3++;
+                        button0=button;
+                        cleardevice();
+                        break;
+ 
+                    }
+                    if((button&1==1)&&x>505&&x<555&&y>430&&y<450)
+                    {
+                        x6++;
+                        break;
+                    }
+ 
+                    button0=button;
+                }
+            }
+             
+            if(p3!=0)
+            {
+                i=records-1;
+                p3=0;
+                p4++;
+                cleardevice();
+                break;
+            }
+            if(x6!=0)
+            {
+                x6=0;
+                x7++;
+                break;
+            }
+            key=bioskey(0);
+            while(1)
+            {
+ 
+                if(key=='P'||key=='p')
+                {
+                    p1++;
+                    cleardevice();
+                    break;
+                }
+                if(key=='N'||key=='n');
+                if(key=='X'||key=='x')
+                {
+                    x1++;
+                    cleardevice();
+                    break;
+                }
+                else
+                {
+                    special1++;
+                    break;
+                }
+            }
+            if(p1!=0)
+            {
+                p1=0;
+                i=records-1;
+                p5++;
+                break;
+            }
+            if(x1!=0)
+            {
+                x1=0;
+                x4++;
+                break;
+            }
+        }
+ 
+ 
+ 
+ 
+        if(p4!=0)
+        {
+            p4=0;
+            i=records-k2-1;
+            cleardevice();
+            continue;
+        }
+        if(p5!=0)
+        {
+            p5=0;
+            i=records-k2-1;
+        cleardevice();
+            continue;
+        }
+        if(x4!=0)
+        {
+            x4=0;
+            break;
+        }
+        if(x7!=0)
+        {
+            x7=0;
+            break;
+        }
+    }
+    cleardevice();
+    sleep(1);
+    disphz3(130,150,z1,15,2);
+    sleep(1);
+    disphz3(270,250,z2,14,2);
+    sleep(1);
+    disphz3(200,350,z3,15,2);
+    sleep(1);
+    settextstyle(0,0,2);
+    outtextxy(245,400,"2016.6.10");
+    sound(6000);
+    sleep(1);
+    for(i=0; i<50; i++)
+    {
+        cleardevice();
+        disphz2(130,150-i*10,z1,15,2);
+        disphz2(270,250-i*10,z2,14,2);
+        disphz2(200,350-i*10,z3,15,2);
+        outtextxy(245,400-i*10,"2016.6.10");
+        delay(7000);
+    }
+    sleep(2);
+    settextstyle(0,0,5);
+    outtextxy(200,200,"THE END");
+    getch();
+    closegraph();
+    return 0;
+}
