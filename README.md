@@ -11,7 +11,6 @@ I was not good at 'C language' at that time, and still a little hate it. Because
 <br>
 Let's back to this C program. Let's back to this C program. <br>
 <br>
-First, 
 
 This program aimed to convert the students' grade which in data files into a graphical way.<br>
 
