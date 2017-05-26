@@ -22,3 +22,4 @@ In the main function, you need to modify every "fopen" function to what you want
 Finally, open the C program with Turbo C and run it, you can see a series of graphics and the bar chart of students' grade. You can use both cursor and keyboard to control it. <br><br>
 
 This is my first "README" in the github, I will be a good programmer.
+2017/5/26
