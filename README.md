@@ -16,8 +16,8 @@ First,
 This program aimed to convert the students' grade which in data files into a graphical way.<br>
 
 In "字库"(Chinese character library) folder, you can see 'HZK16', 'HZK16F' and so on. HZK means the first letter of Chinese phonetic alphabet(han zi ku, 汉字库). The name of these files are composed of "HZK + figure + letter". The figure here means dot matrix, '16' means this is a 16 dot matrix, '24' means this is 24 dot matrix, and so on. The letter here means different format of Chinese characters. The 'S' means 宋体, the 'F' means 繁体, the 'H' means 黑体, the 'K' means 楷体. It has a file named "区位码表" in this folder, you can learn how to use it from the internet, I don't talk about this here.<br><br>
-In "大程序数据库文件" folder, you can see a series of data file, these files store some sutdents' grade. <br>
-In the "disphz1", "disphz2", "disphz3" functions, you should make a correct path in "fopen" function, then you need to put the HZK files to this path. <br>
+In "大程序数据库文件" folder, you can see a series of data files, these files store some sutdents' grade. <br>
+All the "HZK" floders should be placed in 'c' disk.
 In the main function, you need to modify every "fopen" function to what you want at the first parament, then put the data files to this path. <br>
 Finally, open the C program with Turbo C and run it, you can see a series of graphics and the bar chart of students' grade. You can use both cursor and keyboard to control it. <br><br>
 
